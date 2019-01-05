@@ -80,16 +80,28 @@ exports.doesProjectPassTests = (browser, name, URL) => {
 
     capabilities = firefoxOptions.toCapabilities();
 
+  } else if (browser === 'safari') {
+      // Set up Firefox options.
+      const safari = require('selenium-webdriver/safari');
+      // Some of the tests make noise, so turn off the sound.
+      // profile.setPreference('media.volume_scale', '0.0');
+      const safariOptions = new safari.Options();
+      capabilities = safariOptions.toCapabilities();
   } else {
     throw new Error(`Browser ${browser} is not supported`);
   }
 
+  const isSafari = browser === 'safari';
   // For tests purpose, we use a self-signed certificate, so accept
   // insecure certificates
   capabilities.set('acceptInsecureCerts', true);
 
+  const pref = new webdriver.logging.Preferences();
+  pref.setLevel(webdriver.logging.Type.BROWSER, webdriver.logging.Level.SEVERE);
+  capabilities.setLoggingPrefs(pref);
+
   // Create the browser.
-  let driver = new webdriver.Builder()
+  const driver = new webdriver.Builder()
     .withCapabilities(capabilities)
     .build();
 
@@ -144,10 +156,17 @@ exports.doesProjectPassTests = (browser, name, URL) => {
     .then(opacity => (opacity === '1') ? element : false)
   ));
 
+  const consoleErrors = () => driver.manage().logs().get(
+    webdriver.logging.Type.BROWSER
+  );
+
   // Handles errors. Saves a screenshot so we can see what the error is.
   const errorFunc = error => {
-      console.error(error);
-      return saveScreenshot(name, `ERROR-${error.name}`);
+    console.error(error);
+    return saveScreenshot(name, `ERROR-${error.name}`)
+    .then(consoleErrors())
+    .then(logs => logs.forEach(log => console.error(log)))
+    ;
   };
 
   // Test automation starts here.
@@ -185,19 +204,27 @@ exports.doesProjectPassTests = (browser, name, URL) => {
   // https://www.codesd.com/item/access-to-the-elements-in-the-shadow-dom.html
   // and in the jsdocs for `selenium-webdriver/by.js`
 
-  .then(wrapper => clickElement(
-    By.js(wrapper => (
-        (wrapper.shadowRoot ? wrapper.shadowRoot : wrapper)
-          .querySelector('#fcc_test_message-box-rerun-button')
-      ),
-      wrapper
+  .then(wrapper =>
+    clickElement(
+      isSafari ? By.id('fcc_test_message-box-rerun-button') :
+      By.js(wrapper => (
+          (wrapper.shadowRoot ? wrapper.shadowRoot : wrapper)
+            .querySelector('#fcc_test_message-box-rerun-button')
+        ),
+        wrapper
     ))
+    // .then(() => {
+    //   if (isSafari) {
+    //     driver.executeScript(() => FCC_Global.FCCRerunTests());
+    //   }
+    // })
     .then(() => wrapper)
   )
 
   // Wait for 'fcc_test_btn-done' class to be added to the 'Tests' button
   // then click
   .then(wrapper => clickElement(
+    isSafari ? By.className('fcc_test_btn-done') :
     By.js(wrapper => (
         (wrapper.shadowRoot ? wrapper.shadowRoot : wrapper)
           .querySelector('.fcc_test_btn-done')
@@ -214,6 +241,7 @@ exports.doesProjectPassTests = (browser, name, URL) => {
   // Wait for the test results modal. The message box fades in, so we wait for
   // opacity of 1 before grabbing the screenshot.
   .then(wrapper => driver.wait(until.elementLocated(
+    isSafari ? By.className('fcc_test_message-box-shown') :
     By.js(wrapper => (
         (wrapper.shadowRoot ? wrapper.shadowRoot : wrapper)
           .querySelector('.fcc_test_message-box-shown')

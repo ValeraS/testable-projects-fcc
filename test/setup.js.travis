@@ -9,10 +9,10 @@
 global.browsers = [process.env.BROWSER];
 
 // Location of chrome binary.
-global.chromeBinaryPath = '/usr/bin/google-chrome-stable';
+global.chromeBinaryPath = process.env.CHROME_PATH || '/usr/bin/google-chrome-stable';
 
 // Location of firefox binary.
-global.firefoxBinaryPath = 'firefox';
+global.firefoxBinaryPath = process.env.FIREFOX_PATH || 'firefox';
 
 // Where to save screenshots.
 global.screenshotDir = 'travis-screenshots';

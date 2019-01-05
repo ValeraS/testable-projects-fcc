@@ -58,7 +58,8 @@ const shadow = (function attachShadow() {
   document.body.appendChild(testDiv);
   // Using a shadow DOM, the fCC css won't interfere with student css
   // A fallback div is provided.
-  const supportsShadowDOMV1 = !!HTMLElement.prototype.attachShadow;
+  const isSafari = (/(Safari)\/[\d\.]+/).test(navigator.userAgent);
+  const supportsShadowDOMV1 = !!HTMLElement.prototype.attachShadow && !isSafari;
   let shadowDom;
   if (supportsShadowDOMV1) {
     shadowDom = testDiv.attachShadow({ mode: 'open' });
@@ -72,8 +73,9 @@ const shadow = (function attachShadow() {
 // when the document is fully loaded (jquery required).
 $(document).ready(function initTests() {
   // Alert users about cross-browser compatibility issues.
-  const isBrowserSupported = (/(Chrome|Gecko)\/[\d\.]+/)
-    .test(navigator.userAgent);
+  const isBrowserSupported = true;
+    // (/(Chrome|Gecko)\/[\d\.]+/)
+    // .test(navigator.userAgent);
   if (isBrowserSupported === false) {
     alertOnce(
       'Intro Alert',
