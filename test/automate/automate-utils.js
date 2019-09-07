@@ -24,6 +24,7 @@ const { Builder, By, until, logging } = require('selenium-webdriver');
 
 const chrome = require('selenium-webdriver/chrome');
 const firefox = require('selenium-webdriver/firefox');
+const safari = require('selenium-webdriver/safari');
 
 const {
   browserPath,
@@ -138,6 +139,7 @@ exports.doesProjectPassTests = async function(name, URL) {
     .setChromeService(chromeService())
     .setFirefoxOptions(firefoxOptions())
     .setFirefoxService(firefoxService())
+    .setSafariOptions(safariOptions())
     .build();
 
   // If all of the project tests pass, this is set to true.
@@ -282,4 +284,10 @@ function firefoxService() {
     service.setStdio('inherit');
   }
   return service;
+}
+
+function safariOptions() {
+  const options = new safari.Options();
+
+  return options;
 }
